@@ -25,6 +25,21 @@ def print_blockchain_blocks():
     for block in blockchain:
         print(block)
 
+def verify_blockchain():
+    ''' returns 
+        (true) if blockchain is valid : block has the same previous block hash
+        (false) if blockchain is not valid = block != from previous block hash
+    '''
+    index = 1
+    for block in blockchain:
+        if block[0] != blockchain[index - 1]:
+            return False
+        else:
+            index += 1
+    
+    return True
+
+
 while True:
     print(' -- Enter your choice -- ')
     print('[1] : add a new transaction amout')
@@ -44,6 +59,9 @@ while True:
         break
     else:
         print('invalid input --> '+user_choice)
-
-
-print('Finish !')
+    if not verify_blockchain():
+        print('invalid blockchain')
+        break
+else:
+    print('Finish !')
+   
