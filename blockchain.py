@@ -1,3 +1,4 @@
+import functools
 
 #reward
 BLOCK_REWARD = 10
@@ -30,16 +31,17 @@ def get_last_blockchain_value():
 def get_balance(participant): 
     ''' returns the balance of a participant'''  
     transactions_sent = [[transaction['amount'] for transaction in block['transactions'] if transaction['from'] == participant] for block in blockchain]
-    amount_sent = 0
-    for transaction_amnt in transactions_sent:
-        if len(transaction_amnt) > 0:
-            amount_sent += transaction_amnt[0]
     
+    # get amount from recent(sent) transactions [] which is not already added in the blockchain
+    current_transaction = [transaction['amount'] for transaction in transactions if transaction['from'] == participant]
+    
+    transactions_sent.append(current_transaction) 
+    # amount_sent sum with reduce function 
+    amount_sent = functools.reduce(lambda tx_sum, tx_amt: tx_sum + tx_amt[0] if len(tx_amt) > 0 else 0, transactions_sent, 0)
+
     transactions_received = [[transaction['amount'] for transaction in block['transactions'] if transaction['to'] == participant] for block in blockchain]
-    amount_reveived = 0
-    for transaction_amnt in transactions_received:
-        if len(transaction_amnt) > 0:
-            amount_reveived += transaction_amnt[0]
+    # amount_reveived sum with reduce function 
+    amount_reveived = functools.reduce(lambda tx_sum, tx_amt: tx_sum + tx_amt[0] if len(tx_amt) > 0 else 0, transactions_received, 0)
 
     return amount_reveived-amount_sent
 
@@ -49,11 +51,19 @@ def add_transaction( to_recipient, amount,from_sender=owner,):
         'from':from_sender,
         'to':to_recipient,
          'amount':amount}  
-    transactions.append(transaction)
+    if verify_transaction(transaction):
+        transactions.append(transaction)
+        return True
+    return False
 
 def hash_block(block):
     ''' returns hash of block based on values of his elements '''
     return '&'.join([str(block[key]) for key in block])
+
+def verify_transaction(transaction):
+    ''' Verify a transaction the sender has sufficient coins '''
+    sender_balance_account = get_balance(transaction['from'])
+    return sender_balance_account >= transaction['amount']
 
 def mine_block():
     ''' simulate block mining on blockchain '''
@@ -69,7 +79,7 @@ def mine_block():
     block = {
         'previous_hash': hash_block(last_block),
         'index':len(blockchain),
-        'transactions': transactions
+        'transactions': transactions[:]
         }
     blockchain.append(block)
 
@@ -106,9 +116,11 @@ def verify_blockchain():
     return True
 
 
+
+
 while True:
     print(' -- Enter your choice -- ')
-    print('[1] : add a new transaction amout')
+    print('[1] : add a new transaction amount')
     print('[2] : mine new block')
     print('[3] : output the blockchain')
     print('[4] : output participants')
@@ -119,7 +131,10 @@ while True:
     if user_choice == '1':
         transaction_data = get_user_input()
         recipient,amount = transaction_data
-        add_transaction(to_recipient=recipient,amount=amount)
+        if add_transaction(to_recipient=recipient,amount=amount):
+            print('Transaction succeeded !')
+        else:
+            print(f'Transaction failed ! : not enough money to transfer : you have only {amount}')
         print(transactions)
      # choice : 2
     elif user_choice == '2':
@@ -138,7 +153,8 @@ while True:
     if not verify_blockchain():
         print('invalid blockchain')
         break
-    print(get_balance(owner))
-else:
-    print('Finish !')
+    print(f'Account balance of {owner} is {get_balance(owner)}')
+
+    
+print('Finish !')
    
