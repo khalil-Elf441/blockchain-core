@@ -37,11 +37,11 @@ def get_balance(participant):
     
     transactions_sent.append(current_transaction) 
     # amount_sent sum with reduce function 
-    amount_sent = functools.reduce(lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else 0, transactions_sent, 0)
+    amount_sent = functools.reduce(lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum + 0, transactions_sent, 0)
 
     transactions_received = [[transaction['amount'] for transaction in block['transactions'] if transaction['to'] == participant] for block in blockchain]
     # amount_reveived sum with reduce function 
-    amount_reveived = functools.reduce(lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else 0, transactions_received, 0)
+    amount_reveived = functools.reduce(lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum + 0, transactions_received, 0)
 
     return amount_reveived-amount_sent
 
