@@ -40,12 +40,12 @@ def get_balance(participant):
     transactions_sent.append(current_transaction) 
     # amount_sent sum with reduce function 
     amount_sent = reduce(lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum + 0, transactions_sent, 0)
-    print(f'amount_sent {amount_sent}')
+    # print(f'amount_sent {amount_sent}')
     transactions_received = [[transaction['amount'] for transaction in block['transactions'] if transaction['to'] == participant] for block in blockchain]
     
     # amount_reveived sum with reduce function 
     amount_reveived = reduce(lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum + 0, transactions_received, 0)
-    print(f'amount_reveived {amount_reveived}')
+    # print(f'amount_reveived {amount_reveived}')
     return amount_reveived-amount_sent
 
 def add_transaction( to_recipient, amount,from_sender=owner,):
@@ -59,11 +59,25 @@ def add_transaction( to_recipient, amount,from_sender=owner,):
         return True
     return False
 
-
 def hash_block(block):
     ''' returns hash of block based on values of his elements '''
     return hashlib.sha256(json.dumps(block).encode()).hexdigest()
-    
+
+def valid_proof(transactions, last_hash, proof):
+    guess = str(transactions) + str(last_hash) + str(proof)
+    guess_hash = hashlib.sha256(guess.encode()).hexdigest()
+    print(guess_hash)
+    return guess_hash[0:2] == '00'
+
+def proof_of_work():
+    last_block = blockchain[-1]
+    last_block_hash = hash_block(last_block)
+    proof = 0
+    while valid_proof(transactions, last_block_hash,proof):
+        proof += 1
+    return proof
+
+
 
 def verify_transaction(transaction):
     ''' Verify a transaction the sender has sufficient coins '''
