@@ -1,9 +1,10 @@
 from functools import reduce
 import hashlib
 import json
+from collections import OrderedDict
 
 #reward
-BLOCK_REWARD = 10
+BLOCK_MINING_REWARD = 10
 
 # root Block :: first block
 root_block  = {        
@@ -55,10 +56,12 @@ def get_balance(participant):
 
 def add_transaction( to_recipient, amount,from_sender=owner,):
     ''' appends a (new transaction amount) and the (last blockchain value) to blockchain '''
-    transaction = {
-        'from':from_sender,
-        'to':to_recipient,
-         'amount':amount}  
+    # transaction = {
+    #     'from':from_sender,
+    #     'to':to_recipient,
+    #      'amount':amount} 
+    transaction = OrderedDict(
+        [('from', from_sender), ('to', to_recipient), ('amount', amount)]) 
     if verify_transaction(transaction):
         transactions.append(transaction)
         return True
@@ -66,7 +69,7 @@ def add_transaction( to_recipient, amount,from_sender=owner,):
 
 def hash_block(block):
     ''' returns hash of block based on values of his elements '''
-    return hashlib.sha256(json.dumps(block).encode()).hexdigest()
+    return hashlib.sha256(json.dumps(block, sort_keys=True).encode()).hexdigest()
 
 def valid_proof(transactions, last_hash, proof):
     guess = str(transactions) + str(last_hash) + str(proof)
@@ -96,11 +99,13 @@ def mine_block():
     hashed_block = hash_block(last_block)
     proof = proof_of_work()
     #reward transaction for miner
-    reward_transaction = {
-        'from':'MINING_SYSTEM',
-        'to':owner,
-        'amount':BLOCK_REWARD
-    }
+    # reward_transaction = {
+    #     'from':'MINING_SYSTEM',
+    #     'to':owner,
+    #     'amount':BLOCK_REWARD
+    # }
+    reward_transaction = OrderedDict(
+        [('from', 'MINING'), ('to', owner), ('amount', BLOCK_MINING_REWARD)])
     # get copy of transaction
     cp_transactions = transactions[:] 
     cp_transactions.append(reward_transaction)
@@ -172,7 +177,8 @@ while True:
         print(transactions)
      # choice : 2
     elif user_choice == '2':
-        mine_block()
+       if mine_block():
+           transactions = []
     # choice : 3
     elif user_choice == '3':
         print_blockchain_blocks()
