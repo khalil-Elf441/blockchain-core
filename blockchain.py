@@ -1,4 +1,6 @@
-import functools
+from functools import reduce
+import hashlib
+import json
 
 #reward
 BLOCK_REWARD = 10
@@ -37,12 +39,13 @@ def get_balance(participant):
     
     transactions_sent.append(current_transaction) 
     # amount_sent sum with reduce function 
-    amount_sent = functools.reduce(lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum + 0, transactions_sent, 0)
-
+    amount_sent = reduce(lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum + 0, transactions_sent, 0)
+    print(f'amount_sent {amount_sent}')
     transactions_received = [[transaction['amount'] for transaction in block['transactions'] if transaction['to'] == participant] for block in blockchain]
+    
     # amount_reveived sum with reduce function 
-    amount_reveived = functools.reduce(lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum + 0, transactions_received, 0)
-
+    amount_reveived = reduce(lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum + 0, transactions_received, 0)
+    print(f'amount_reveived {amount_reveived}')
     return amount_reveived-amount_sent
 
 def add_transaction( to_recipient, amount,from_sender=owner,):
@@ -56,9 +59,11 @@ def add_transaction( to_recipient, amount,from_sender=owner,):
         return True
     return False
 
+
 def hash_block(block):
     ''' returns hash of block based on values of his elements '''
-    return '&'.join([str(block[key]) for key in block])
+    return hashlib.sha256(json.dumps(block).encode()).hexdigest()
+    
 
 def verify_transaction(transaction):
     ''' Verify a transaction the sender has sufficient coins '''
