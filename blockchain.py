@@ -9,7 +9,8 @@ BLOCK_REWARD = 10
 root_block  = {        
     'previous_hash': '1234',
     'index':0,
-    'transactions': []
+    'transactions': [],
+    'proof':50
     }
 
 # blockchain list
@@ -32,21 +33,25 @@ def get_last_blockchain_value():
 
 def get_balance(participant): 
     ''' returns the balance of a participant'''  
-    transactions_sent = [[transaction['amount'] for transaction in block['transactions'] if transaction['from'] == participant] for block in blockchain]
+    transactions_sent = [[transaction['amount'] for transaction in block['transactions']
+                         if transaction['from'] == participant] for block in blockchain]
     
     # get amount from recent(sent) transactions [] which is not already added in the blockchain
-    current_transaction = [transaction['amount'] for transaction in transactions if transaction['from'] == participant]
+    current_transaction = [transaction['amount']
+                         for transaction in transactions if transaction['from'] == participant]
     
     transactions_sent.append(current_transaction) 
     # amount_sent sum with reduce function 
-    amount_sent = reduce(lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum + 0, transactions_sent, 0)
-    # print(f'amount_sent {amount_sent}')
+    amount_sent = reduce(lambda tx_sum, tx_amt: tx_sum + sum(tx_amt)
+                         if len(tx_amt) > 0 else tx_sum + 0, transactions_sent, 0)
+    print(f'amount_sent {amount_sent}')
     transactions_received = [[transaction['amount'] for transaction in block['transactions'] if transaction['to'] == participant] for block in blockchain]
     
     # amount_reveived sum with reduce function 
-    amount_reveived = reduce(lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum + 0, transactions_received, 0)
-    # print(f'amount_reveived {amount_reveived}')
-    return amount_reveived-amount_sent
+    amount_reveived = reduce(lambda tx_sum, tx_amt: tx_sum + sum(tx_amt)
+                     if len(tx_amt) > 0 else tx_sum + 0, transactions_received, 0)
+    print(f'amount_reveived {amount_reveived}')
+    return amount_reveived - amount_sent
 
 def add_transaction( to_recipient, amount,from_sender=owner,):
     ''' appends a (new transaction amount) and the (last blockchain value) to blockchain '''
@@ -73,7 +78,7 @@ def proof_of_work():
     last_block = blockchain[-1]
     last_block_hash = hash_block(last_block)
     proof = 0
-    while valid_proof(transactions, last_block_hash,proof):
+    while not valid_proof(transactions, last_block_hash,proof):
         proof += 1
     return proof
 
@@ -87,18 +92,24 @@ def verify_transaction(transaction):
 def mine_block():
     ''' simulate block mining on blockchain '''
     last_block = blockchain[-1]
+
+    hashed_block = hash_block(last_block)
+    proof = proof_of_work()
     #reward transaction for miner
     reward_transaction = {
         'from':'MINING_SYSTEM',
         'to':owner,
         'amount':BLOCK_REWARD
     }
-    transactions.append(reward_transaction)
+    # get copy of transaction
+    cp_transactions = transactions[:] 
+    cp_transactions.append(reward_transaction)
     # add the new block
     block = {
         'previous_hash': hash_block(last_block),
         'index':len(blockchain),
-        'transactions': transactions[:]
+        'transactions': cp_transactions, 
+        'proof':proof
         }
     blockchain.append(block)
 
@@ -131,7 +142,11 @@ def verify_blockchain():
         if index == 0:
             continue
         if block['previous_hash'] != hash_block(blockchain[index - 1]):
+            print('Invalid Hash')
             return False 
+        if not valid_proof(block['transactions'][:-1], block['previous_hash'], block['proof']):
+            print('Invalid proof of work')
+            return False
     return True
 
 
