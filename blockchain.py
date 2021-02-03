@@ -7,16 +7,8 @@ from collections import OrderedDict
 #reward
 BLOCK_MINING_REWARD = 10
 
-# root Block :: first block
-root_block  = {        
-    'previous_hash': '1234',
-    'index':0,
-    'transactions': [],
-    'proof':50
-    }
-
 # blockchain list
-blockchain = [root_block]
+blockchain = []
 
 # transactions list
 transactions = []
@@ -75,28 +67,65 @@ def hash_block(block):
   
 
 def save_data():
-    with open('blockchain.p', mode='wb') as f:
-        # f.write(json.dumps(blockchain))
-        # f.write('\n')
-        # f.write(json.dumps(transactions))
-        save_data = {
-            'blockchain' : blockchain,
-            'transactions' : transactions
-        }
-        f.write(pickle.dumps(save_data))
+    try:
+        with open('blockchain.txt', mode='w') as f:
+            f.write(json.dumps(blockchain))
+            f.write('\n')
+            f.write(json.dumps(transactions))
+    except IOError:
+        print('saving failed !')
 
 
 
 
 def load_data():
-    with open('blockchain.p', mode='rb') as f:
-        file_content = pickle.loads(f.read())
-        print(file_content)
-        global blockchain
-        global transactions
-        blockchain = file_content['blockchain']
-        transactions = file_content['transactions']
+    try:
+        with open('blockchain.txt', mode='r') as f:
+            file_content = f.readlines()
+            # print(file_content)
+            global blockchain
+            global transactions
+            blockchain = json.loads(file_content[0][:-1])
+            #load blockchain
+            load_blockchain = []
+            for block in blockchain:
+                formated_block = {
+                    'previous_hash': block['previous_hash'],
+                    'index': block['index'],
+                    'proof': block['proof'],
+                    'transactions': [OrderedDict(
+                        [('from', tx['from']),
+                        ('to', tx['to']),
+                        ('amount', tx['amount'])]) for tx in block['transactions']]
+                }
+                load_blockchain.append(formated_block)
+            blockchain = load_blockchain
+            #load transactions
+            transactions = json.loads(file_content[1])
+            load_transactions = []
+            for tx in transactions:
+                formated_transaction = OrderedDict(
+                    [('from', tx['from']), ('to', tx['to']), ('amount', tx['amount'])])
+                load_transactions.append(formated_transaction)
+            transactions = load_transactions
+    except (IndexError,IOError):
+        # root Block :: first block
+        root_block  = {        
+            'previous_hash': '1234',
+            'index':0,
+            'transactions': [],
+            'proof':50
+            }
 
+        # blockchain list
+        blockchain = [root_block]
+
+        # transactions list
+        transactions = []
+        print('File not found ! : init with default values')
+
+
+load_data()
 
 def valid_proof(transactions, last_hash, proof):
     guess = str(transactions) + str(last_hash) + str(proof)
@@ -218,7 +247,11 @@ while True:
         print_participants()
     # quit 
     elif user_choice == 'q':
-        break
+        if transactions :
+            print('Some transactions are not saved in block !')
+            final_choice = input('Do you want to continue anyway? [y/n] ')
+            if final_choice == 'y':
+                break
     else:
         print('invalid input --> '+user_choice)
     if not verify_blockchain():
