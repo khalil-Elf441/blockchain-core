@@ -1,6 +1,7 @@
 from functools import reduce
 import hashlib
 import json
+import pickle
 from collections import OrderedDict
 
 #reward
@@ -74,39 +75,28 @@ def hash_block(block):
   
 
 def save_data():
-    with open('blockchain.txt', mode='w') as f:
-        f.write(json.dumps(blockchain))
-        f.write('\n')
-        f.write(json.dumps(transactions))
+    with open('blockchain.p', mode='wb') as f:
+        # f.write(json.dumps(blockchain))
+        # f.write('\n')
+        # f.write(json.dumps(transactions))
+        save_data = {
+            'blockchain' : blockchain,
+            'transactions' : transactions
+        }
+        f.write(pickle.dumps(save_data))
+
+
+
 
 def load_data():
-    with open('blockchain.txt', mode='r') as f:
-        file_content = f.readlines()
+    with open('blockchain.p', mode='rb') as f:
+        file_content = pickle.loads(f.read())
+        print(file_content)
         global blockchain
         global transactions
-        blockchain = json.loads(file_content[0][:-1])
-        #load blockchain
-        load_blockchain = []
-        for block in blockchain:
-            formated_block = {
-                'previous_hash': block['previous_hash'],
-                'index': block['index'],
-                'proof': block['proof'],
-                'transactions': [OrderedDict(
-                    [('from', tx['from']),
-                     ('to', tx['to']),
-                      ('amount', tx['amount'])]) for tx in block['transactions']]
-            }
-            load_blockchain.append(formated_block)
-        blockchain = load_blockchain
-        #load transactions
-        transactions = json.loads(file_content[1])
-        load_transactions = []
-        for tx in transactions:
-            formated_transaction = OrderedDict(
-                [('from', tx['from']), ('to', tx['to']), ('amount', tx['amount'])])
-            load_transactions.append(formated_transaction)
-        transactions = load_transactions
+        blockchain = file_content['blockchain']
+        transactions = file_content['transactions']
+
 
 def valid_proof(transactions, last_hash, proof):
     guess = str(transactions) + str(last_hash) + str(proof)
