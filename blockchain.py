@@ -71,6 +71,15 @@ def hash_block(block):
     ''' returns hash of block based on values of his elements '''
     return hashlib.sha256(json.dumps(block, sort_keys=True).encode()).hexdigest()
 
+  
+
+def save_data():
+    with open('blockchain.txt', mode='w') as f:
+        f.write(json.dumps(blockchain))
+        f.write('\n')
+        f.write(json.dumps(transactions))
+
+
 def valid_proof(transactions, last_hash, proof):
     guess = str(transactions) + str(last_hash) + str(proof)
     guess_hash = hashlib.sha256(guess.encode()).hexdigest()
@@ -96,7 +105,7 @@ def mine_block():
     ''' simulate block mining on blockchain '''
     last_block = blockchain[-1]
 
-    hashed_block = hash_block(last_block)
+    # hashed_block = hash_block(last_block)
     proof = proof_of_work()
     #reward transaction for miner
     # reward_transaction = {
@@ -117,6 +126,9 @@ def mine_block():
         'proof':proof
         }
     blockchain.append(block)
+    save_data()
+    return True
+
 
 def get_user_input():
     ''' returns the user input as float '''
@@ -179,6 +191,7 @@ while True:
     elif user_choice == '2':
        if mine_block():
            transactions = []
+           save_data()
     # choice : 3
     elif user_choice == '3':
         print_blockchain_blocks()
