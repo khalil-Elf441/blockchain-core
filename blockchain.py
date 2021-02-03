@@ -79,6 +79,34 @@ def save_data():
         f.write('\n')
         f.write(json.dumps(transactions))
 
+def load_data():
+    with open('blockchain.txt', mode='r') as f:
+        file_content = f.readlines()
+        global blockchain
+        global transactions
+        blockchain = json.loads(file_content[0][:-1])
+        #load blockchain
+        load_blockchain = []
+        for block in blockchain:
+            formated_block = {
+                'previous_hash': block['previous_hash'],
+                'index': block['index'],
+                'proof': block['proof'],
+                'transactions': [OrderedDict(
+                    [('from', tx['from']),
+                     ('to', tx['to']),
+                      ('amount', tx['amount'])]) for tx in block['transactions']]
+            }
+            load_blockchain.append(formated_block)
+        blockchain = load_blockchain
+        #load transactions
+        transactions = json.loads(file_content[1])
+        load_transactions = []
+        for tx in transactions:
+            formated_transaction = OrderedDict(
+                [('from', tx['from']), ('to', tx['to']), ('amount', tx['amount'])])
+            load_transactions.append(formated_transaction)
+        transactions = load_transactions
 
 def valid_proof(transactions, last_hash, proof):
     guess = str(transactions) + str(last_hash) + str(proof)
