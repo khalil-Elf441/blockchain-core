@@ -1,8 +1,9 @@
 from functools import reduce
 import hashlib
 import json
-import pickle
+# import pickle
 from collections import OrderedDict
+from block import Block
 
 #reward
 BLOCK_MINING_REWARD = 10
@@ -27,7 +28,7 @@ def get_last_blockchain_value():
 
 def get_balance(participant): 
     ''' returns the balance of a participant'''  
-    transactions_sent = [[transaction['amount'] for transaction in block['transactions']
+    transactions_sent = [[transaction['amount'] for transaction in block.transactions
                          if transaction['from'] == participant] for block in blockchain]
     
     # get amount from recent(sent) transactions [] which is not already added in the blockchain
@@ -39,7 +40,7 @@ def get_balance(participant):
     amount_sent = reduce(lambda tx_sum, tx_amt: tx_sum + sum(tx_amt)
                          if len(tx_amt) > 0 else tx_sum + 0, transactions_sent, 0)
     print(f'amount_sent {amount_sent}')
-    transactions_received = [[transaction['amount'] for transaction in block['transactions'] if transaction['to'] == participant] for block in blockchain]
+    transactions_received = [[transaction['amount'] for transaction in block.transactions if transaction['to'] == participant] for block in blockchain]
     
     # amount_reveived sum with reduce function 
     amount_reveived = reduce(lambda tx_sum, tx_amt: tx_sum + sum(tx_amt)
@@ -62,14 +63,16 @@ def add_transaction( to_recipient, amount,from_sender=owner,):
 
 def hash_block(block):
     ''' returns hash of block based on values of his elements '''
-    return hashlib.sha256(json.dumps(block, sort_keys=True).encode()).hexdigest()
+    hashable_block = block.__dict__.copy()
+    return hashlib.sha256(json.dumps(hashable_block, sort_keys=True).encode()).hexdigest()
 
   
 
 def save_data():
     try:
         with open('blockchain.txt', mode='w') as f:
-            f.write(json.dumps(blockchain))
+            sv_chain = [block.__dict__ for block in blockchain]
+            f.write(json.dumps(sv_chain))
             f.write('\n')
             f.write(json.dumps(transactions))
     except IOError:
@@ -89,15 +92,15 @@ def load_data():
             #load blockchain
             load_blockchain = []
             for block in blockchain:
-                formated_block = {
-                    'previous_hash': block['previous_hash'],
-                    'index': block['index'],
-                    'proof': block['proof'],
-                    'transactions': [OrderedDict(
+                formated_block = Block(
+                    block['index'],
+                    block['previous_hash'],
+                    [OrderedDict(
                         [('from', tx['from']),
                         ('to', tx['to']),
-                        ('amount', tx['amount'])]) for tx in block['transactions']]
-                }
+                        ('amount', tx['amount'])]) for tx in block['transactions']],
+                    block['proof'],
+                )
                 load_blockchain.append(formated_block)
             blockchain = load_blockchain
             #load transactions
@@ -110,12 +113,7 @@ def load_data():
             transactions = load_transactions
     except (IndexError,IOError):
         # root Block :: first block
-        root_block  = {        
-            'previous_hash': '1234',
-            'index':0,
-            'transactions': [],
-            'proof':50
-            }
+        root_block  = Block(0,'',[],50)
 
         # blockchain list
         blockchain = [root_block]
@@ -166,12 +164,12 @@ def mine_block():
     cp_transactions = transactions[:] 
     cp_transactions.append(reward_transaction)
     # add the new block
-    block = {
-        'previous_hash': hash_block(last_block),
-        'index':len(blockchain),
-        'transactions': cp_transactions, 
-        'proof':proof
-        }
+    block = Block(
+        len(blockchain),
+        hash_block(last_block),
+        cp_transactions, 
+        proof
+    )
     blockchain.append(block)
     save_data()
     return True
@@ -205,10 +203,10 @@ def verify_blockchain():
     for (index, block) in enumerate(blockchain):
         if index == 0:
             continue
-        if block['previous_hash'] != hash_block(blockchain[index - 1]):
+        if block.previous_hash != hash_block(blockchain[index - 1]):
             print('Invalid Hash')
             return False 
-        if not valid_proof(block['transactions'][:-1], block['previous_hash'], block['proof']):
+        if not valid_proof(block.transactions[:-1], block.previous_hash, block.proof):
             print('Invalid proof of work')
             return False
     return True
