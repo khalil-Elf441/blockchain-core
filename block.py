@@ -7,3 +7,6 @@ class Block:
         self.transactions = transactions
         self.proof = proof
         self.timestamp = time
+    
+    def __repr__(self) -> str:
+        return str(self.__dict__)

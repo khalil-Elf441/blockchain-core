@@ -9,3 +9,6 @@ class Transaction:
     
     def tx_ordered_dict(self):
         return OrderedDict([('from', self.t_from), ('to',self.t_to), ('amount', self.amount)])
+
+    def __repr__(self) -> str:
+        return str(self.__dict__)
