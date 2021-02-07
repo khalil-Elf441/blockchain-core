@@ -16,8 +16,8 @@ class Verification_util:
         print(guess_hash)
         return guess_hash[0:2] == '00'
 
-    @staticmethod
-    def verify_blockchain(blockchain):
+    @classmethod
+    def verify_blockchain(cls, blockchain):
         ''' returns 
             (true) if blockchain is valid : block has the same previous block hash
             (false) if blockchain is not valid = block != from previous block hash
@@ -26,9 +26,9 @@ class Verification_util:
             if index == 0:
                 continue
             if block.previous_hash != Hash_util.hash_block(blockchain.chain[index - 1]):
-                print('Invalid Hash')
+                print(f'Invalid Hash at {block.previous_hash}')
                 return False 
-            if not Verification_util.valid_proof(block.transactions[:-1], block.previous_hash, block.proof):
+            if not cls.valid_proof(block.transactions[:-1], block.previous_hash, block.proof):
                 print('Invalid proof of work')
                 return False
         return True
