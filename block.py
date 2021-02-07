@@ -1,7 +1,7 @@
-import time
+from datetime import datetime
 
 class Block:
-    def __init__(self, index, previous_hash, transactions, proof, time=time()):
+    def __init__(self, index, previous_hash, transactions, proof, time=datetime.now().strftime("%d/%m/%Y %H:%M:%S")):
         self.index = index
         self.previous_hash = previous_hash
         self.transactions = transactions
