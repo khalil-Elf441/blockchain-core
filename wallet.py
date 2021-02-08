@@ -12,17 +12,23 @@ class Wallet:
         private_key, public_key = self.generate_keys()
         self.private_key = private_key
         self.public_key = public_key
-        with open('wallet.txt', mode='w') as f:
-                f.write(public_key)
-                f.write('\n')
-                f.write(private_key)
+        try:
+            with open('wallet.txt', mode='w') as f:
+                    f.write(public_key)
+                    f.write('\n')
+                    f.write(private_key)
+        except(IOError,IndexError): 
+            print("Saving wallet keys failed...")
 
 
     def load_keys(self) -> None:
-        with open('wallet.txt', mode='r') as f:
-            keys = f.readlines()
-            self.public_key = keys[0][:-1]
-            self.private_key = keys[1]
+        try:
+            with open('wallet.txt', mode='r') as f:
+                keys = f.readlines()
+                self.public_key = keys[0][:-1]
+                self.private_key = keys[1]
+        except(IOError,IndexError): 
+            print("loading wallet keys failed...")
 
 
     def generate_keys(self):
