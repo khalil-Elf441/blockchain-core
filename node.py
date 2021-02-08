@@ -33,12 +33,13 @@ class Node:
     def listen_for_requests(self):
         while True:
             print(' -- Enter your choice -- ')
-            print('[1] : add a new transaction amount')
-            print('[2] : mine new block')
-            print('[3] : output the blockchain')
-            print('[4] : create Wallet')
-            print('[5] : load Wallet')
-            print('[q] : quit')
+            print('[1] : Add a new transaction amount')
+            print('[2] : Mine new block')
+            print('[3] : Output the blockchain')
+            print('[4] : Create Wallet')
+            print('[5] : Load Wallet')
+            print('[6] : Save Wallet keys')
+            print('[q] : Quit')
             # get user input
             user_choice = self.get_user_choice()
             # choice : 1
@@ -63,8 +64,11 @@ class Node:
                 self.blockchain = Blockchain(self.wallet.public_key)
             # choice : 5
             elif user_choice == '5':
-                pass
-                # self.blockchain = Blockchain(self.wallet.public_key)
+                self.wallet.load_keys()
+                self.blockchain = Blockchain(self.wallet.public_key)
+            # choice : 6    
+            elif user_choice == '6':
+                self.wallet.save_keys()
             # choice : q
             elif user_choice == 'q':
                 if self.blockchain.transactions:
