@@ -17,21 +17,30 @@ class Blockchain:
         # root Block :: first block
         root_block  = Block(0,'',[],50)
         #initializing blockchain list
-        self.chain = [root_block]
+        self.__chain = [root_block]
         # transactions list
-        self.transactions = []
+        self.__transactions = []
         self.load_data()
         self.hosting_node = hosting_node_id
+
+    @property
+    def chain(self):
+        return self.__chain[:]
+
+    @property
+    def transactions(self):
+        return self.__transactions[:]
+    
 
     def load_data(self):
         try:
             with open('blockchain.txt', mode='r') as f:
                 file_content = f.readlines()
                 # print(file_content)
-                self.chain = json.loads(file_content[0][:-1])
+                self.__chain = json.loads(file_content[0][:-1])
                 #load blockchain
                 load_blockchain = []
-                for block in self.chain:
+                for block in self.__chain:
                     conv_transaction = [Transaction(tx['t_from'],tx['t_to'],tx['amount']) for tx in block['transactions']]
                     formated_block = Block(
                         block['index'],
@@ -40,7 +49,7 @@ class Blockchain:
                         block['proof'],
                     )
                     load_blockchain.append(formated_block)
-                self.chain = load_blockchain
+                self.__chain = load_blockchain
                 #load transactions
                 self.transactions  = json.loads(file_content[1])
                 load_transactions = []
@@ -62,7 +71,7 @@ class Blockchain:
                         block_item.previous_hash,
                         [tx.__dict__ for tx in block_item.transactions],
                         block_item.proof,
-                        block_item.timestamp) for block_item in self.chain]]
+                        block_item.timestamp) for block_item in self.__chain]]
                 f.write(json.dumps(sv_chain))
                 f.write('\n')
 
@@ -72,7 +81,7 @@ class Blockchain:
             print('saving failed !')
 
     def proof_of_work(self):
-        last_block = self.chain[-1]
+        last_block = self.__chain[-1]
         last_block_hash = Hash_util.hash_block(last_block)
         proof = 0
         while not Verification_util.valid_proof(self.transactions, last_block_hash,proof):
@@ -82,14 +91,14 @@ class Blockchain:
 
     def get_last_blockchain_value(self):
         ''' returns the last value of the blockchain '''
-        if len(self.chain) < 1: 
+        if len(self.__chain) < 1: 
             return None
-        return self.chain[-1]
+        return self.__chain[-1]
 
     def get_balance(self, participant): 
         ''' returns the balance of a participant'''  
         transactions_sent = [[transaction.amount for transaction in block.transactions
-                            if transaction.t_from == participant] for block in self.chain]
+                            if transaction.t_from == participant] for block in self.__chain]
         
         # get amount from recent(sent) transactions [] which is not already added in the blockchain
         current_transaction = [transaction.amount
@@ -100,7 +109,8 @@ class Blockchain:
         amount_sent = reduce(lambda tx_sum, tx_amt: tx_sum + sum(tx_amt)
                             if len(tx_amt) > 0 else tx_sum + 0, transactions_sent, 0)
         print(f'amount_sent {amount_sent}')
-        transactions_received = [[transaction.amount for transaction in block.transactions if transaction.t_to == participant] for block in self.chain]
+        transactions_received = [[transaction.amount for transaction in block.transactions
+         if transaction.t_to == participant] for block in self.__chain]
         
         # amount_reveived sum with reduce function 
         amount_reveived = reduce(lambda tx_sum, tx_amt: tx_sum + sum(tx_amt)
@@ -115,6 +125,8 @@ class Blockchain:
             to_recipient,
             amount
         )   
+        if self.hosting_node == None:
+            return False
         if Verification_util.verify_transaction(transaction, self.get_balance):
             self.transactions.append(transaction)
             self.save_data()
@@ -123,7 +135,12 @@ class Blockchain:
 
     def mine_block(self):
         ''' simulate block mining on blockchain '''
-        last_block = self.chain[-1]
+
+        
+        if self.hosting_node == None:
+            return False
+
+        last_block = self.__chain[-1]
 
         # hashed_block = hash_block(last_block)
         proof = self.proof_of_work()
@@ -135,12 +152,12 @@ class Blockchain:
         cp_transactions.append(reward_transaction)
         # add the new block
         block = Block(
-            len(self.chain),
+            len(self.__chain),
             Hash_util.hash_block(last_block),
             cp_transactions, 
             proof
         )
-        self.chain.append(block)
-        self.transactions = []
+        self.__chain.append(block)
+        self.__transactions = []
         self.save_data()      
         return True    
