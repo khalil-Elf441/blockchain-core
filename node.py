@@ -46,10 +46,11 @@ class Node:
             if user_choice == '1':
                 transaction_data = self.get_user_input()
                 recipient,amount = transaction_data
-                if self.blockchain.add_transaction(to_recipient=recipient,from_sender=self.wallet.public_key,amount=amount):
+                signature = self.wallet.sign_transaction(self.wallet.public_key, recipient, amount)
+                if self.blockchain.add_transaction(to_recipient=recipient,from_sender=self.wallet.public_key, signature=signature,amount=amount):
                     print('Transaction succeeded !')
                 else:
-                    print(f'Transaction failed ! : not enough money to transfer : you have only {amount}')
+                    print(f'Transaction failed ! : not enough money to transfer : you have only {self.blockchain.get_balance(self.wallet.public_key)}')
                 print(self.blockchain.transactions)
             # choice : 2
             elif user_choice == '2':
@@ -83,7 +84,7 @@ class Node:
             if not Verification_util.verify_blockchain(self.blockchain):
                 print('Invalid blockchain : Verification goes wrong')
                 break
-            print(f'Account balance of {self.wallet.public_key} is {self.blockchain.get_balance(self.wallet.public_key)}')
+            print(f'Account balance of {self.wallet.public_key[0:5]} is {self.blockchain.get_balance(self.wallet.public_key)}')
 
 if __name__ == '__main__':
     node = Node()

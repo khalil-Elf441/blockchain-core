@@ -37,30 +37,37 @@ class Blockchain:
             with open('blockchain.txt', mode='r') as f:
                 file_content = f.readlines()
                 # print(file_content)
-                self.__chain = json.loads(file_content[0][:-1])
+                blockchain = json.loads(file_content[0][:-1])
                 #load blockchain
                 load_blockchain = []
-                for block in self.__chain:
-                    conv_transaction = [Transaction(tx['t_from'],tx['t_to'],tx['amount']) for tx in block['transactions']]
+                for block in blockchain:
+                    conv_transaction = [Transaction(tx['t_from'],tx['t_to'],tx['signature'],tx['amount']) for tx in block['transactions']]
                     formated_block = Block(
                         block['index'],
                         block['previous_hash'],
                         conv_transaction,
                         block['proof'],
+                        block['timestamp']
                     )
                     load_blockchain.append(formated_block)
                 self.__chain = load_blockchain
                 #load transactions
-                self.transactions  = json.loads(file_content[1])
+                op_transactions  = json.loads(file_content[1])
                 load_transactions = []
-                for tx in self.transactions:
-                    formated_transaction = Transaction(tx['from'],tx['to'],tx['amount'])
+                for tx in op_transactions:
+                    formated_transaction = Transaction(
+                        tx['from'],
+                        tx['to'],
+                        tx['signature'],
+                        tx['amount'])
                     # formated_transaction = OrderedDict(
                     #     [('from', tx['from']), ('to', tx['to']), ('amount', tx['amount'])])
                     load_transactions.append(formated_transaction)
-                self.transactions  = load_transactions
-        except (IndexError,IOError):
-            pass
+                self.__transactions  = load_transactions
+        except (IndexError,IOError) as e:
+            print(e)
+        finally:
+            print("loading finish !")    
 
     def save_data(self):
         try:
@@ -72,6 +79,7 @@ class Blockchain:
                         [tx.__dict__ for tx in block_item.transactions],
                         block_item.proof,
                         block_item.timestamp) for block_item in self.__chain]]
+
                 f.write(json.dumps(sv_chain))
                 f.write('\n')
 
@@ -118,17 +126,21 @@ class Blockchain:
         print(f'amount_reveived {amount_reveived}')
         return amount_reveived - amount_sent
 
-    def add_transaction(self, to_recipient, from_sender,amount):
+    def add_transaction(self, to_recipient, from_sender, signature, amount):
         ''' appends a (new transaction amount) and the (last blockchain value) to blockchain '''
+        
+        if self.hosting_node == None:
+            return False
+        
         transaction = Transaction(
             from_sender,
             to_recipient,
+            signature,
             amount
         )   
-        if self.hosting_node == None:
-            return False
+
         if Verification_util.verify_transaction(transaction, self.get_balance):
-            self.transactions.append(transaction)
+            self.__transactions.append(transaction)
             self.save_data()
             return True
         return False
@@ -145,7 +157,7 @@ class Blockchain:
         # hashed_block = hash_block(last_block)
         proof = self.proof_of_work()
 
-        reward_transaction = Transaction('MINING', self.hosting_node, BLOCK_MINING_REWARD)
+        reward_transaction = Transaction('MINING', self.hosting_node,'', BLOCK_MINING_REWARD)
 
         # get copy of transaction
         cp_transactions = self.transactions[:] 
