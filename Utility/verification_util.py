@@ -1,5 +1,6 @@
 import hashlib
 from Utility.hash_util import Hash_util
+from wallet import Wallet
 
 class Verification_util:
 
@@ -7,7 +8,7 @@ class Verification_util:
     def verify_transaction(transaction, get_balance):
         ''' Verify a transaction the sender has sufficient coins '''
         sender_balance_account = get_balance(transaction.t_from)
-        return sender_balance_account >= transaction.amount
+        return sender_balance_account >= transaction.amount and Wallet.verify_transaction(transaction)
 
     @staticmethod
     def valid_proof(transactions, last_hash, proof):

@@ -7,6 +7,7 @@ from block import Block
 from transaction import Transaction
 from Utility.verification_util import Verification_util
 from Utility.hash_util import Hash_util
+from wallet import Wallet
 
 #reward
 BLOCK_MINING_REWARD = 10
@@ -56,8 +57,8 @@ class Blockchain:
                 load_transactions = []
                 for tx in op_transactions:
                     formated_transaction = Transaction(
-                        tx['from'],
-                        tx['to'],
+                        tx['t_from'],
+                        tx['t_to'],
                         tx['signature'],
                         tx['amount'])
                     # formated_transaction = OrderedDict(
@@ -138,7 +139,9 @@ class Blockchain:
             signature,
             amount
         )   
-
+        if not Wallet.verify_transaction(transaction):
+            print("Transation dont match Public Key !")
+            return False
         if Verification_util.verify_transaction(transaction, self.get_balance):
             self.__transactions.append(transaction)
             self.save_data()
@@ -161,6 +164,10 @@ class Blockchain:
 
         # get copy of transaction
         cp_transactions = self.transactions[:] 
+        if not cp_transactions:
+            for tx in cp_transactions:
+                if not Wallet.verify_transaction(tx):
+                    return False
         cp_transactions.append(reward_transaction)
         # add the new block
         block = Block(
@@ -169,6 +176,7 @@ class Blockchain:
             cp_transactions, 
             proof
         )
+
         self.__chain.append(block)
         self.__transactions = []
         self.save_data()      

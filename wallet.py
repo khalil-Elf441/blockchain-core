@@ -21,8 +21,11 @@ class Wallet:
                     f.write(self.public_key)
                     f.write('\n')
                     f.write(self.private_key)
-        except(IOError,IndexError): 
+        except(IOError,IndexError) as e:  
             print("Saving wallet keys failed...")
+            print(e)
+        finally:
+            print(" save_keys finsh !")
 
 
 
@@ -32,8 +35,11 @@ class Wallet:
                 keys = f.readlines()
                 self.public_key = keys[0][:-1]
                 self.private_key = keys[1]
-        except(IOError,IndexError): 
+        except(IOError,IndexError) as e: 
             print("loading wallet keys failed...")
+            print(e)
+        finally:
+            print(" load_keys finsh !")
 
 
     def generate_keys(self):
